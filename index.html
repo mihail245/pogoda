@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Погодное приложение</title>
+    <title>Погода</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -42,6 +42,9 @@
             margin: 0 auto;
             padding: 20px;
         }
+      button, a, input, .tab, .location-tag, .weather-card, .dark-mode-toggle {
+    -webkit-tap-highlight-color: transparent;
+}
         h1 {
             text-align: center;
             font-family: 'Montserrat', sans-serif;
@@ -823,6 +826,66 @@
             justify-content: space-between;
             margin: 3px 0;
         }
+      .sun-widget {
+    position: fixed;
+    bottom: 162px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: var(--card-shadow);
+    z-index: 100;
+    width: 200px;
+    transition: var(--transition);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+body.dark-mode .sun-widget {
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sun-progress {
+    position: relative;
+    height: 30px;
+    margin-bottom: 10px;
+}
+.sun-track {
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    position: relative;
+    top: 27px;
+}
+body.dark-mode .sun-track {
+    background: #555;
+}
+.sun-icon {
+    position: absolute;
+    left: 0;
+    top: 15px;
+    color: #FFD700;
+    font-size: 1.2rem;
+    transform: translateX(-50%);
+    animation: sun-move 30s linear infinite;
+  z-index: 1000;
+}
+.sun-times {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+}
+body.dark-mode .sun-times {
+    color: #aaa;
+}
+.sun-position {
+    text-align: center;
+    font-size: 0.9rem;
+}
+@keyframes sun-move {
+    0% { left: 0%; transform: translateX(-50%) rotate(0deg); }
+    50% { left: 100%; transform: translateX(-50%) rotate(180deg); }
+    100% { left: 0%; transform: translateX(-50%) rotate(360deg); }
+}
         @keyframes rain {
             0% { transform: translateY(-5px); }
             50% { transform: translateY(5px); }
@@ -847,6 +910,39 @@
             50% { transform: translateX(5px); }
             100% { transform: translateX(0); }
         }
+@keyframes rain-fall {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 0 1000px, 0 400px; }
+}
+.rain-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(transparent, rgba(66, 165, 245, 0.1)),
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background-size: 100% 100%, 50px 100%;
+    animation: rain-fall 2s linear infinite;
+    pointer-events: none;
+}
+.snow-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="2" fill="white"/></svg>');
+    background-size: 20px 20px;
+    animation: snow-fall 10s linear infinite;
+    pointer-events: none;
+}
+@keyframes snow-fall {
+    0% { background-position: 0 0; }
+    100% { background-position: 100px 500px; }
+}
         .weather-icon.animated, .hourly-icon.animated, .daily-icon.animated {
             animation-duration: 3s;
             animation-iteration-count: infinite;
@@ -951,6 +1047,17 @@
             <div class="widget-title">Погода сейчас</div>
             <button class="widget-close" id="widget-close">&times;</button>
         </div>
+      <div class="sun-widget" id="sun-widget">
+    <div class="sun-progress">
+        <div class="sun-icon"><i class="fas fa-sun"></i></div>
+        <div class="sun-track"></div>
+        <div class="sun-times">
+            <span id="sunrise-time">06:00</span>
+            <span id="sunset-time">18:00</span>
+        </div>
+    </div>
+    <div class="sun-position" id="sun-position">День: 50%</div>
+</div>
         <div class="widget-content">
             <div class="widget-location" id="widget-location">-</div>
             <div class="widget-temp" id="widget-temp">-°C</div>
@@ -969,9 +1076,9 @@
         <button class="alert-close" id="alert-close">&times;</button>
     </div>
     <div class="container">
-        <h1><i class="fas fa-cloud-sun"></i> Погодное приложение</h1>
+        <h1><i class="fas fa-cloud-sun"></i> Погода</h1>
         <div class="locations-control">
-            <h2><i class="fas fa-map-marked-alt"></i> Управление местоположениями</h2>
+            <h2><i class="fas fa-map-marked-alt"></i> Управление местами</h2>
             <div class="location-type">
                 <label>
                     <input type="radio" name="locationType" value="city" checked>
@@ -1308,6 +1415,24 @@
             const sunsetTime = new Date((data.sys.sunset + data.timezone) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const uvIndex = data.uvi !== undefined ? Math.round(data.uvi) : 'н/д';
             const clothingAdvice = getClothingAdvice(data.main.temp, data.weather[0].main);
+          document.getElementById('sunrise-time').textContent = sunriseTime;
+document.getElementById('sunset-time').textContent = sunsetTime;
+
+// Анимация положения солнца
+const now = new Date().getTime() / 1000;
+const dayStart = data.sys.sunrise;
+const dayEnd = data.sys.sunset;
+const dayProgress = Math.min(100, Math.max(0, (now - dayStart) / (dayEnd - dayStart) * 100));
+document.getElementById('sun-position').textContent = dayProgress < 0 ? 'До восхода' : 
+    dayProgress > 100 ? 'После заката' : `День: ${Math.round(dayProgress)}%`;
+document.querySelector('.sun-icon').style.left = `${dayProgress}%`;
+          function getTempIcon(temp) {
+    if (temp < -10) return '<i class="fas fa-temperature-low animated pulse" style="color:#4cc9f0"></i>';
+    if (temp < 0) return '<i class="fas fa-snowflake animated snow-animation" style="color:#a0d2eb"></i>';
+    if (temp < 10) return '<i class="fas fa-thermometer-quarter animated cloud-animation" style="color:#5e72e4"></i>';
+    if (temp < 20) return '<i class="fas fa-thermometer-half animated pulse" style="color:#f7b924"></i>';
+    return '<i class="fas fa-thermometer-full animated sun-animation" style="color:#fd5d93"></i>';
+}
             element.innerHTML = `
                 <div class="weather-info">
                     <div>
@@ -1322,7 +1447,6 @@
                     <div class="detail-item"><i class="fas fa-wind"></i> Ветер: ${data.wind.speed} м/с, ${getWindDirection(data.wind.deg)}</div>
                     <div class="detail-item"><i class="fas fa-thermometer-half"></i> Давление: ${Math.round(data.main.pressure * 0.75006375541921)} мм рт. ст.</div>
                     <div class="detail-item"><i class="fas fa-cloud"></i> Облачность: ${data.clouds.all}%</div>
-                    <div class="detail-item"><i class="fas fa-sun"></i> UV индекс: ${uvIndex}</div>
                     <div class="detail-item"><i class="fas fa-temperature-low"></i> Мин.: ${Math.round(data.main.temp_min)}°C</div>
                     <div class="detail-item"><i class="fas fa-temperature-high"></i> Макс.: ${Math.round(data.main.temp_max)}°C</div>
                     <div class="detail-item"><i class="fas fa-sun"></i> Восход: ${sunriseTime}</div>
